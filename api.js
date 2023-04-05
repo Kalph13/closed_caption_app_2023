@@ -10,8 +10,8 @@ export const tmdbAPI = {
         const [_, query] = queryKey;
         return fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&language=en-US&page=1&query=${query}`).then(res => res.json())
     },
-    title: ({ queryKey }) => {
+    detail: ({ queryKey }) => {
         const [_, id] = queryKey;
-        return fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&append_to_response=videos,images`);
+        return fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&append_to_response=videos,images`).then(res => res.json());
     }
 };
