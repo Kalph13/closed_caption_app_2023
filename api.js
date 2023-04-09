@@ -1,6 +1,6 @@
 /* TMDB API: https://developers.themoviedb.org */
-const API_KEY = "53003f8485665501746ef9cdb21e5b20";
-const BASE_URL = "https://api.themoviedb.org/3";
+export const API_KEY = "53003f8485665501746ef9cdb21e5b20";
+export const BASE_URL = "https://api.themoviedb.org/3";
 
 export const tmdbAPI = {
     trending: () => fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}`).then(res => res.json()),
@@ -13,5 +13,9 @@ export const tmdbAPI = {
     detail: ({ queryKey }) => {
         const [_, id] = queryKey;
         return fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&append_to_response=videos,images`).then(res => res.json());
+    },
+    season: async ({ queryKey }) => {
+        const [_, id, season_number] = queryKey;
+        return fetch(`${BASE_URL}/tv/${id}/season/${season_number}?api_key=${API_KEY}`).then(res => res.json());
     }
 };

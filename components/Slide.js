@@ -56,7 +56,7 @@ const Slide = ({ backdrop_path, poster_path, original_title, vote_average, overv
             <Image source={{ uri: createImgPath(poster_path) }} />
             <BlurView 
                 intensity={100}
-                tint="dark"
+                tint="light"
                 style={{
                     width: "100%",
                     height: "100%",

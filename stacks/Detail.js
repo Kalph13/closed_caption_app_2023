@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import styled from 'styled-components';
 import { StatusBar } from 'expo-status-bar';
 import { Dimensions, Platform, Share, StyleSheet } from "react-native";
@@ -12,7 +12,7 @@ import * as WebBrowser from "expo-web-browser";
 import Loader from "../components/Loader";
 import Poster from "../components/Poster";
 import { createImgPath } from "../utils";
-import { tmdbAPI } from "../api";
+import { tmdbAPI, BASE_URL, API_KEY } from "../api";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -58,9 +58,24 @@ const ButtonText = styled.Text`
     line-height: 24px;
 `;
 
+const SeasonText = styled.Text``;
+const EpisodeText = styled.Text``;
+
 const Detail = ({ navigation: { setOptions }, route: { params } }) => {
     const isAndroid = Platform.OS === "android";
     const { isLoading, data } = useQuery(["TVs", params.id], tmdbAPI.detail);
+    const [ seasonsData, setSeasonsData ] = useState([]);
+
+    const getSeasonsData = async () => {
+        var fetchedData = [];
+        /* for (var num = 1; num <= data.seasons.length; num++ ) {
+            fetchedData = [...fetchedData, await fetch(`${BASE_URL}/tv/${params.id}/season/${num}?api_key=${API_KEY}`).then(res => res.json())];
+        } */
+        for (const season of data.seasons) {
+            fetchedData = [...fetchedData, await fetch(`${BASE_URL}/tv/${params.id}/season/${season.season_number}?api_key=${API_KEY}`).then(res => res.json())];
+        }
+        setSeasonsData(fetchedData);
+    };
 
     const shareMedia = async () => {
         await Share.share({
@@ -68,13 +83,13 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
             message: isAndroid ? data.homepage : null,
             title: isAndroid ? params.original_name : null
         });
-    }
+    };
 
     const ShareButtonHeaderRight = () => (
         <ShareButton onPress={shareMedia}>
             <Ionicons name="share-outline" color={"black"} size={24} />
         </ShareButton>
-    )
+    );
 
     useEffect(() => {
         setOptions({
@@ -86,6 +101,11 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
         data ? setOptions({
             headerRight: () => <ShareButtonHeaderRight />
         }) : null
+    }, [data]);
+
+    
+    useEffect(() => {
+        data ? getSeasonsData() : null
     }, [data]);
 
     const openVideo = async (videoID) => {
@@ -114,6 +134,7 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
                         <ButtonText>{video.name}</ButtonText>
                     </VideoButton>
                 )}
+                {seasonsData?.map(season => <SeasonText key={season.id}>{season.name}</SeasonText>)}
             </Data>
         </ScrollView>
     );
