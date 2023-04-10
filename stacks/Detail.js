@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Dimensions, Platform, Share, StyleSheet } from "react-native";
 import { useQuery } from "react-query";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 /* How to Use Gradient in React Native: https://docs.expo.dev/versions/latest/sdk/linear-gradient */
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,6 +18,7 @@ import { tmdbAPI, BASE_URL, API_KEY } from "../api";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const ScrollView = styled.ScrollView``;
+
 const Image = styled.Image``;
 
 const Header = styled.View`
@@ -31,7 +33,7 @@ const Column = styled.View`
 `;
 
 const Title = styled.Text`
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
     align-self: flex-end;
     width: 60%;
@@ -43,6 +45,7 @@ const Data = styled.View`
 `;
 
 const Overview = styled.Text`
+    font-size: 16px;
     margin: 20px 0px;
 `;
 
@@ -53,16 +56,37 @@ const VideoButton = styled.TouchableOpacity`
 const ShareButton = styled.TouchableOpacity``;
 
 const ButtonText = styled.Text`
+    font-size: 16px;
+    line-height: 24px;
     margin-left: 10px;
     margin-bottom: 10px;
-    line-height: 24px;
 `;
 
-const SeasonText = styled.Text``;
-const EpisodeText = styled.Text``;
+const Separator = styled.View`
+    background-color: black;
+    height: 2px;
+    margin-bottom: 10px;
+`;
+
+const SeasonView = styled.View``;
+
+const SeasonText = styled.Text`
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0px;
+`;
+
+const EpisodeButton = styled.TouchableOpacity``;
+
+const EpisodeText = styled.Text`
+    font-size: 16px;
+    line-height: 32px;
+`;
 
 const Detail = ({ navigation: { setOptions }, route: { params } }) => {
     const isAndroid = Platform.OS === "android";
+    const navigation = useNavigation();
+
     const { isLoading, data } = useQuery(["TVs", params.id], tmdbAPI.detail);
     const [ seasonsData, setSeasonsData ] = useState([]);
 
@@ -75,6 +99,17 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
             fetchedData = [...fetchedData, await fetch(`${BASE_URL}/tv/${params.id}/season/${season.season_number}?api_key=${API_KEY}`).then(res => res.json())];
         }
         setSeasonsData(fetchedData);
+    };
+
+    const moveToScript = ( detailNum, seasonNum, episodeNum ) => {
+        navigation.navigate("Stacks", {
+            screen: "Script",
+            params: {
+                detailNum,
+                seasonNum,
+                episodeNum
+            }
+        });
     };
 
     const shareMedia = async () => {
@@ -134,7 +169,17 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
                         <ButtonText>{video.name}</ButtonText>
                     </VideoButton>
                 )}
-                {seasonsData?.map(season => <SeasonText key={season.id}>{season.name}</SeasonText>)}
+                {seasonsData?.map(season => 
+                    <SeasonView key={season.id}>
+                        <SeasonText>{season.name}</SeasonText>
+                        <Separator />
+                        {season.episodes.map(episode => 
+                            <EpisodeButton key={episode.id} onPress={() => moveToScript(params.id, season.season_number, episode.episode_number)}>
+                                <EpisodeText>{episode.name}</EpisodeText>
+                            </EpisodeButton>
+                        )}
+                    </SeasonView>
+                )}
             </Data>
         </ScrollView>
     );
