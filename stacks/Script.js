@@ -6,6 +6,7 @@ import { db_script } from "../database/db_script";
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import Loader from "../components/Loader";
 
 const ScrollView = styled.ScrollView`
     padding: 0px 20px;
@@ -24,7 +25,8 @@ const Text = styled.Text`
 `;
 
 export default function Script({ navigation: { setOptions }, route: { params } }) {
-    const [ textState, setTextState ] = useState([]);    
+    const [ textState, setTextState ] = useState([]);
+    const [ isLoading, setIsLoading ] = useState(true);    
     const { detailNum, seasonNum, episodeNum } = params;
     
     const getHTML = async () => {
@@ -65,6 +67,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         });
 
         setTextState(textArray);
+        setIsLoading(false);
     };
 
     useEffect(() => {
@@ -72,6 +75,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
     }, []);
 
     return (
+        isLoading ? <Loader /> :
         <ScrollView>
             <StatusBar style="auto" />
             <View>
