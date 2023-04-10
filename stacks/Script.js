@@ -27,10 +27,10 @@ const Text = styled.Text`
 export default function Script({ navigation: { setOptions }, route: { params } }) {
     const [ textState, setTextState ] = useState([]);
     const [ isLoading, setIsLoading ] = useState(true);    
-    const { detailNum, seasonNum, episodeNum } = params;
+    const { original_name, season_number, episode_number } = params;
     
     const getHTML = async () => {
-        return await axios.get(`https://transcripts.foreverdreaming.org/viewtopic.php?t=${db_script[detailNum][seasonNum][episodeNum]}`);
+        return await axios.get(`https://transcripts.foreverdreaming.org/viewtopic.php?t=${db_script[original_name][season_number][episode_number]}`);
     }
 
     const getText = async () => {

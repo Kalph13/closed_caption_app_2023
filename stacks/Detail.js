@@ -47,6 +47,7 @@ const Data = styled.View`
 const Overview = styled.Text`
     font-size: 16px;
     margin: 20px 0px;
+    line-height: 24px;
 `;
 
 const VideoButton = styled.TouchableOpacity`
@@ -101,13 +102,13 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
         setSeasonsData(fetchedData);
     };
 
-    const moveToScript = ( detailNum, seasonNum, episodeNum ) => {
+    const moveToScript = ( original_name, season_number, episode_number ) => {
         navigation.navigate("Stacks", {
             screen: "Script",
             params: {
-                detailNum,
-                seasonNum,
-                episodeNum
+                original_name,
+                season_number,
+                episode_number
             }
         });
     };
@@ -174,7 +175,7 @@ const Detail = ({ navigation: { setOptions }, route: { params } }) => {
                         <SeasonText>{season.name}</SeasonText>
                         <Separator />
                         {season.episodes.map(episode => 
-                            <EpisodeButton key={episode.id} onPress={() => moveToScript(params.id, season.season_number, episode.episode_number)}>
+                            <EpisodeButton key={episode.id} onPress={() => moveToScript(params.original_name, season.season_number, episode.episode_number)}>
                                 <EpisodeText>{episode.name}</EpisodeText>
                             </EpisodeButton>
                         )}
