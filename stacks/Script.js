@@ -2,11 +2,11 @@ import React from "react";
 import styled from 'styled-components';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
-import { db_script } from "../database/db_script";
+import Loader from "../components/Loader";
 
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import Loader from "../components/Loader";
+import { db_script } from "../database/db_script";
 
 const ScrollView = styled.ScrollView`
     padding: 0px 20px;
@@ -37,20 +37,8 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         const html = await getHTML();
         const $ = cheerio.load(html.data);
         const $textList = $(".content");
-        
+
         let textArray = [];
-
-        /* Before Split */
-        /* $textList.each((idx, node) => {
-            $(node.children).each((ids, childNode) => {
-                textArray.push({
-                    key: ids,
-                    payload: $(childNode).text()
-                });
-            });
-        }); */
-
-        /* After Split */
         let spiltIndex = 0;
         
         $textList.each((idx, node) => {
@@ -70,6 +58,30 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         setIsLoading(false);
     };
 
+    const getDict = async (payload) => {
+        return await axios.get(`https://dic.daum.net/search.do?q=${payload}&dic=eng&search_first=Y`);
+    }
+    
+    const getVoca = async (payload) => {
+        const dict = await getDict(payload);
+        const $ = cheerio.load(dict.data);
+        const $vocaList = $(".cleanword_type.kuek_type");
+
+        console.log("payload: ", payload);
+        
+        let vocaArray = [];
+    
+        $vocaList.each((ids, node) => {
+            vocaArray.push({
+                key: ids,
+                mean: $(node).find(".list_search").text().trim(),
+                pronounce: $(node).find(".txt_pronounce").text().trim()
+            }); 
+        });
+    
+        console.log("vocaArray: ", vocaArray);
+    };
+    
     useEffect(() => {
         getText();
     }, []);
@@ -80,7 +92,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
             <StatusBar style="auto" />
             <View>
                 {textState.map(node =>
-                    <TouchableOpacity key={node.key}>
+                    <TouchableOpacity key={node.key} onPress={() => getVoca(node.payload)}>
                         <Text>{node.payload}{" "}</Text>
                     </TouchableOpacity>
                 )}

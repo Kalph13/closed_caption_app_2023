@@ -1,3 +1,6 @@
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+
 /* TMDB API: https://developers.themoviedb.org */
 export const API_KEY = "53003f8485665501746ef9cdb21e5b20";
 export const BASE_URL = "https://api.themoviedb.org/3";
