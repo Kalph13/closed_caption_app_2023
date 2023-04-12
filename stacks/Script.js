@@ -12,6 +12,10 @@ const ScrollView = styled.ScrollView`
     padding: 0px 20px;
 `;
 
+const FlatList = styled.FlatList`
+    padding: 0px 20px;
+`;
+
 const View = styled.View`
     flex-direction: row;
     flex-wrap: wrap;
@@ -24,9 +28,44 @@ const Text = styled.Text`
     line-height: 32px;
 `;
 
+const Modal = styled.Modal`
+
+`;
+
+const CenteredView = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+`
+
+const ModalView = styled.View`
+    width: 250px;
+    height: 250px;
+    margin: 20px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+`
+
+const CloseButton = styled.TouchableOpacity`
+    border-radius: 20px;
+    padding: 10px;
+    background-color: black;
+`
+
+const CloseText = styled.Text`
+    color: white;
+`
+
 export default function Script({ navigation: { setOptions }, route: { params } }) {
     const [ textState, setTextState ] = useState([]);
-    const [ isLoading, setIsLoading ] = useState(true);    
+    const [ vocaState, setVocaState ] = useState([]);
+    const [ isLoading, setIsLoading ] = useState(true);
+    const [ isModal, setIsModal ] = useState(false);
     const { original_name, season_number, episode_number } = params;
     
     const getHTML = async () => {
@@ -39,18 +78,31 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         const $textList = $(".content");
 
         let textArray = [];
-        let spiltIndex = 0;
+        let splitIndex = 0;
+        
+        let text = "";
+        let splitText = [];
+        let lineCount = 0;
         
         $textList.each((idx, node) => {
             $(node.children).each((ids, childNode) => {
-                const text = $(childNode).text();
-                const spiltText = text.split(/[ \n]+/);
-                spiltText.map(item => {
+                if ($(childNode)[0].name === "br") {
+                    while(lineCount < 9) {
+                        splitText.push("");
+                        lineCount++;
+                    }
+                } else {
+                    text = $(childNode).text().trim();
+                    splitText = text.split(/[\s\n]+|""/);
+                    lineCount = splitText.length % 9;
+                }
+                splitText.map(item => {
                     textArray.push({
-                        key: spiltIndex++,
-                        payload: item
+                        key: splitIndex++,
+                        payload: item + " "
                     });
-                })
+                });
+                splitText=[];
             });
         });
 
@@ -74,12 +126,14 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         $vocaList.each((ids, node) => {
             vocaArray.push({
                 key: ids,
-                mean: $(node).find(".list_search").text().trim(),
+                mean: $(node).find(".txt_search").text().trim(),
                 pronounce: $(node).find(".txt_pronounce").text().trim()
             }); 
         });
     
         console.log("vocaArray: ", vocaArray);
+        setVocaState(vocaArray);
+        setIsModal(true);
     };
     
     useEffect(() => {
@@ -88,15 +142,59 @@ export default function Script({ navigation: { setOptions }, route: { params } }
 
     return (
         isLoading ? <Loader /> :
-        <ScrollView>
+        <>
             <StatusBar style="auto" />
-            <View>
-                {textState.map(node =>
-                    <TouchableOpacity key={node.key} onPress={() => getVoca(node.payload)}>
-                        <Text>{node.payload}{" "}</Text>
+            <FlatList 
+                data={textState}
+                renderItem={node =>
+                    <TouchableOpacity onPress={() => getVoca(node.item.payload)}>
+                        <Text>{node.item.payload}</Text>
                     </TouchableOpacity>
-                )}
-            </View>
-        </ScrollView>
+                }
+                key={item => item.key}
+                numColumns={9}
+            />
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isModal}
+                onRequestClose={() => setIsModal(false)}
+            >
+                <CenteredView>
+                    <ModalView> 
+                        <Text>{vocaState[0]?.mean}</Text>
+                        <Text>{vocaState[0]?.pronounce}</Text>
+                        <CloseButton
+                            onPress={() => setIsModal(false)}
+                        >
+                            <CloseText>Close Modal</CloseText>
+                        </CloseButton>
+                    </ModalView>
+                </CenteredView>
+            </Modal>
+        </>
     );    
 }
+
+/*
+            <ScrollView>
+                <StatusBar style="auto" />
+                <View>
+                    {textState.map(node =>
+                        <TouchableOpacity key={node.key} onPress={() => getVoca(node.payload)}>
+                            <Text>{node.payload}{" "}</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </ScrollView>
+            <FlatList 
+                data={textState}
+                renderItem={node =>
+                    <TouchableOpacity onPress={() => getVoca(node.item.payload)}>
+                        <Text>{node.item.payload}{" "}</Text>
+                    </TouchableOpacity>
+                }
+                key={item => item.key}
+                numColumns={10}
+            />
+*/
