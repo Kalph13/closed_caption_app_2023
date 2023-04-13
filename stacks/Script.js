@@ -16,7 +16,11 @@ const FlatList = styled.FlatList`
     padding: 0px 20px;
 `;
 
-const View = styled.View`
+const VirtualizedList = styled.VirtualizedList`
+    padding: 0px 20px;
+`;
+
+const TextView = styled.View`
     flex-direction: row;
     flex-wrap: wrap;
 `;
@@ -30,6 +34,10 @@ const Text = styled.Text`
 
 const Modal = styled.Modal`
 
+`;
+
+const SafeAreaView = styled.View`
+    flex: 1;
 `;
 
 const CenteredView = styled.View`
@@ -79,8 +87,28 @@ export default function Script({ navigation: { setOptions }, route: { params } }
 
         let textArray = [];
         let splitIndex = 0;
+        let splitText = [];
+        let mergeText;
         
-        let text = "";
+        $textList.each((idx, node) => {
+            $(node.children).each((ids, childNode) => {
+                if ($(childNode)[0].name !== "br") {
+                    splitText = $(childNode).text().trim().split(/[\s\n]+|""/);
+                    mergeText = splitText.map(item =>
+                        <TouchableOpacity key={splitIndex++} onPress={() => getVoca(item)}>
+                            <Text>{item + " "}</Text>
+                        </TouchableOpacity>
+                    );
+                    textArray.push({
+                        key: ids,
+                        payload: mergeText
+                    });
+                }
+            });
+        });
+
+        /* For FlatList */
+        /* let text = "";
         let splitText = [];
         let lineCount = 0;
         
@@ -104,7 +132,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                 });
                 splitText=[];
             });
-        });
+        }); */
 
         setTextState(textArray);
         setIsLoading(false);
@@ -115,12 +143,10 @@ export default function Script({ navigation: { setOptions }, route: { params } }
     }
     
     const getVoca = async (payload) => {
-        const dict = await getDict(payload);
+        const trimmed = payload.replace(/[.,!?*"]/g, "")
+        const dict = await getDict(trimmed);
         const $ = cheerio.load(dict.data);
-        const $vocaList = $(".cleanword_type.kuek_type");
-
-        console.log("payload: ", payload);
-        
+        const $vocaList = $(".cleanword_type.kuek_type");        
         let vocaArray = [];
     
         $vocaList.each((ids, node) => {
@@ -131,7 +157,9 @@ export default function Script({ navigation: { setOptions }, route: { params } }
             }); 
         });
     
+        console.log("trimmed: ", trimmed);
         console.log("vocaArray: ", vocaArray);
+
         setVocaState(vocaArray);
         setIsModal(true);
     };
@@ -144,15 +172,12 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         isLoading ? <Loader /> :
         <>
             <StatusBar style="auto" />
-            <FlatList 
+            <VirtualizedList 
                 data={textState}
-                renderItem={node =>
-                    <TouchableOpacity onPress={() => getVoca(node.item.payload)}>
-                        <Text>{node.item.payload}</Text>
-                    </TouchableOpacity>
-                }
-                key={item => item.key}
-                numColumns={9}
+                getItem={(data, index) => data[index]}
+                getItemCount={() => textState.length}
+                renderItem={({item}) => <TextView>{item.payload}</TextView>}
+                keyExtractor={item => item.key}
             />
             <Modal
                 animationType="slide"
@@ -176,25 +201,42 @@ export default function Script({ navigation: { setOptions }, route: { params } }
     );    
 }
 
-/*
-            <ScrollView>
-                <StatusBar style="auto" />
-                <View>
-                    {textState.map(node =>
-                        <TouchableOpacity key={node.key} onPress={() => getVoca(node.payload)}>
-                            <Text>{node.payload}{" "}</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </ScrollView>
-            <FlatList 
-                data={textState}
-                renderItem={node =>
-                    <TouchableOpacity onPress={() => getVoca(node.item.payload)}>
-                        <Text>{node.item.payload}{" "}</Text>
-                    </TouchableOpacity>
-                }
-                key={item => item.key}
-                numColumns={10}
-            />
+/* ScrollView: Easy But Too Slow
+    <ScrollView>
+        <StatusBar style="auto" />
+        <TextView>
+            {textState.map(node =>
+                <TouchableOpacity key={node.key} onPress={() => getVoca(node.payload)}>
+                    <Text>{node.payload}{" "}</Text>
+                </TouchableOpacity>
+            )}
+        </TextView>
+    </ScrollView>
+*/
+
+/* FlatView: Faster But Still Slow
+    <FlatList 
+        data={textState}
+        renderItem={node =>
+            <TouchableOpacity onPress={() => getVoca(node.item.payload)}>
+                <Text>{node.item.payload}</Text>
+            </TouchableOpacity>
+        }
+        key={item => item.key}
+        numColumns={9}
+    />
+*/
+
+/* Virtualized List: Fastest and I Love It
+    <VirtualizedList 
+        data={textState}
+        getItem={(data, index) => data[index]}
+        getItemCount={() => 10000}
+        renderItem={({item}) =>
+            <TouchableOpacity onPress={() => getVoca(item.payload)}>
+                <Text>{item.payload}</Text>
+            </TouchableOpacity>
+        }
+        keyExtractor={item => item.key}
+    />
 */
