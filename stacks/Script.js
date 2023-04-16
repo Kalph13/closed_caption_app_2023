@@ -8,6 +8,8 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { db_script } from "../database/db_script";
 
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 const ScrollView = styled.ScrollView`
     padding: 0px 20px;
 `;
@@ -20,14 +22,14 @@ const VirtualizedList = styled.VirtualizedList`
     padding: 0px 20px;
 `;
 
-const TextView = styled.View`
+const ScriptView = styled.View`
     flex-direction: row;
     flex-wrap: wrap;
 `;
 
-const TouchableOpacity = styled.TouchableOpacity``;
+const ScriptClick = styled.TouchableOpacity``;
 
-const Text = styled.Text`
+const ScriptText = styled.Text`
     font-size: 16px;
     line-height: 32px;
 `;
@@ -39,29 +41,75 @@ const CenteredView = styled.View`
     justify-content: center;
     align-items: center;
     margin-top: 20px;
+    padding: 150px 0px;
 `
 
 const ModalView = styled.View`
-    width: 250px;
-    height: 250px;
-    margin: 20px;
-    padding: 20px;
+    width: 300px;
+    height: 500px;
+    background-color: lightgray;
+    border-radius: 20px;
+`;
+
+const ModalScrollView = styled.ScrollView`
+    width: 300px;
+    padding: 0px 10px;
+    flex-wrap: wrap;
+`;
+
+const SectionView = styled.View`
+    width: 260px;
+    margin: 10px;
+    padding: 10px;
     background-color: white;
     border-radius: 20px;
-    align-items: center;
-    justify-content: center;
+`;
+
+const SectionTitle = styled.Text`
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+`;
+
+const SearchWordView = styled.View`
+    width: 240px;
+    margin: 10px;
+`;
+
+const SearchWordTitle = styled.Text`
+    font-size: 24px;
+    font-weight: bold;
+    color: #3eb489;
+    margin: 2.5px 0px;
+`;
+
+const SearchWordMainText = styled.Text`
+    font-size: 16px;
+    margin: 2.5px 0px;
+`;
+
+const SearchWordSubText = styled.Text`
+    font-size: 14px;
+    margin: 2.5px 0px;
+    color: grey;
+`;
+
+const SearchMeanView = styled.View``;
+
+const SearchExampleView = styled.View``;
+
+const FlexWrapView = styled.View`
+    flex-direction: row;
     flex-wrap: wrap;
-`
+    margin: 2.5px 0px;
+`;
 
 const CloseButton = styled.TouchableOpacity`
-    border-radius: 20px;
-    padding: 10px;
-    background-color: black;
-`
-
-const CloseText = styled.Text`
-    color: white;
-`
+    width: 290px;
+    padding-top: 10px;
+    flex-direction: row-reverse;
+`;
 
 export default function Script({ navigation: { setOptions }, route: { params } }) {
     const [ textState, setTextState ] = useState([]);
@@ -89,9 +137,9 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                 if ($(childNode)[0].name !== "br") {
                     splitText = $(childNode).text().trim().split(/[\s\n]+|""/);
                     mergeText = splitText.map(item =>
-                        <TouchableOpacity key={splitIndex++} onPress={() => getVoca(item)}>
-                            <Text>{item + " "}</Text>
-                        </TouchableOpacity>
+                        <ScriptClick key={splitIndex++} onPress={() => getVoca(item)}>
+                            <ScriptText>{item + " "}</ScriptText>
+                        </ScriptClick>
                     );
                     textArray.push({
                         key: ids,
@@ -143,23 +191,32 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         const $vocaList = $(".cleanword_type.kuek_type");   
             
         let vocaArray = [];
+        let wordArray = [];
         let meanArray = [];
         let pronounceArray = [];
         
         $vocaList.each((ids, node) => {
+            wordArray = $(node).find(".txt_emph1").text().trim().split(/[\s\n]+|""/);
             meanArray = $(node).find(".list_search").text().trim().split(/[\s\n]+|""/);
-            console.log("meanArray", meanArray);
             pronounceArray = $(node).find(".wrap_listen").text().trim().split(/[\s\n]+|""/);
-            console.log("pronounceArray", pronounceArray);
             vocaArray.push({
                 key: ids,
+                word: wordArray,
                 mean: meanArray,
                 pronounce: pronounceArray
             }); 
         });
-    
+
+        const $exampleList = $(".list_example.sound_example");
+        let exampleArray = [];
+        
+        $exampleList.each((ids, node) => {
+           exampleArray = $(node).text().trim().split(/[\n]+|""/);
+        });
+
         console.log("trimmed:", trimmed);
         console.log("vocaArray:", vocaArray);
+        console.log("exampleArray:", exampleArray);
 
         setVocaState(vocaArray);
         setIsModal(true);
@@ -177,7 +234,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                 data={textState}
                 getItem={(data, index) => data[index]}
                 getItemCount={() => textState.length}
-                renderItem={({item}) => <TextView>{item.payload}</TextView>}
+                renderItem={({item}) => <ScriptView>{item.payload}</ScriptView>}
                 keyExtractor={item => item.key}
             />
             <Modal
@@ -187,14 +244,25 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                 onRequestClose={() => setIsModal(false)}
             >
                 <CenteredView>
-                    <ModalView> 
-                        {vocaState[0]?.mean.map((item, index) => <Text key={index}>{item}</Text>)}
-                        {vocaState[0]?.pronounce.map((item, index) => <Text key={index}>{item}</Text>)}
+                    <ModalView>
                         <CloseButton
                             onPress={() => setIsModal(false)}
                         >
-                            <CloseText>Close Modal</CloseText>
+                            <Ionicons name="close-outline" size={24} color="black" />
                         </CloseButton>
+                        <ModalScrollView>
+                            <SectionView>
+                                <SectionTitle>단어·숙어</SectionTitle>
+                                <SearchWordView>
+                                    <SearchWordTitle>{vocaState[0]?.word[0]}</SearchWordTitle>
+                                    <FlexWrapView>
+                                        {vocaState[0]?.mean.map((item, index) => <SearchWordMainText key={index}>{item + " "}</SearchWordMainText>)}
+                                    </FlexWrapView>
+                                    <SearchWordSubText>미국: {vocaState[0]?.pronounce[1]}</SearchWordSubText>
+                                    <SearchWordSubText>영국: {vocaState[0]?.pronounce[4]}</SearchWordSubText>
+                                </SearchWordView>
+                            </SectionView>
+                        </ModalScrollView>
                     </ModalView>
                 </CenteredView>
             </Modal>
