@@ -32,13 +32,7 @@ const Text = styled.Text`
     line-height: 32px;
 `;
 
-const Modal = styled.Modal`
-
-`;
-
-const SafeAreaView = styled.View`
-    flex: 1;
-`;
+const Modal = styled.Modal``;
 
 const CenteredView = styled.View`
     flex: 1;
@@ -146,19 +140,26 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         const trimmed = payload.replace(/[.,!?*"]/g, "")
         const dict = await getDict(trimmed);
         const $ = cheerio.load(dict.data);
-        const $vocaList = $(".cleanword_type.kuek_type");        
+        const $vocaList = $(".cleanword_type.kuek_type");   
+            
         let vocaArray = [];
-    
+        let meanArray = [];
+        let pronounceArray = [];
+        
         $vocaList.each((ids, node) => {
+            meanArray = $(node).find(".list_search").text().trim().split(/[\s\n]+|""/);
+            console.log("meanArray", meanArray);
+            pronounceArray = $(node).find(".wrap_listen").text().trim().split(/[\s\n]+|""/);
+            console.log("pronounceArray", pronounceArray);
             vocaArray.push({
                 key: ids,
-                mean: $(node).find(".txt_search").text().trim(),
-                pronounce: $(node).find(".txt_pronounce").text().trim()
+                mean: meanArray,
+                pronounce: pronounceArray
             }); 
         });
     
-        console.log("trimmed: ", trimmed);
-        console.log("vocaArray: ", vocaArray);
+        console.log("trimmed:", trimmed);
+        console.log("vocaArray:", vocaArray);
 
         setVocaState(vocaArray);
         setIsModal(true);
@@ -187,8 +188,8 @@ export default function Script({ navigation: { setOptions }, route: { params } }
             >
                 <CenteredView>
                     <ModalView> 
-                        <Text>{vocaState[0]?.mean}</Text>
-                        <Text>{vocaState[0]?.pronounce}</Text>
+                        {vocaState[0]?.mean.map((item, index) => <Text key={index}>{item}</Text>)}
+                        {vocaState[0]?.pronounce.map((item, index) => <Text key={index}>{item}</Text>)}
                         <CloseButton
                             onPress={() => setIsModal(false)}
                         >
