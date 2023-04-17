@@ -47,7 +47,7 @@ const CenteredView = styled.View`
 const ModalView = styled.View`
     width: 300px;
     height: 500px;
-    background-color: lightgray;
+    background-color: #e9e9e9;
     border-radius: 20px;
 `;
 
@@ -73,7 +73,7 @@ const SectionTitle = styled.Text`
 `;
 
 const SearchWordView = styled.View`
-    width: 240px;
+    width: 220px;
     margin: 10px;
 `;
 
@@ -95,10 +95,6 @@ const SearchWordSubText = styled.Text`
     color: grey;
 `;
 
-const SearchMeanView = styled.View``;
-
-const SearchExampleView = styled.View``;
-
 const FlexWrapView = styled.View`
     flex-direction: row;
     flex-wrap: wrap;
@@ -114,6 +110,8 @@ const CloseButton = styled.TouchableOpacity`
 export default function Script({ navigation: { setOptions }, route: { params } }) {
     const [ textState, setTextState ] = useState([]);
     const [ vocaState, setVocaState ] = useState([]);
+    const [ idiomState, setIdiomState ] = useState([]);
+    const [ exampleState, setExampleState] = useState([]);
     const [ isLoading, setIsLoading ] = useState(true);
     const [ isModal, setIsModal ] = useState(false);
     const { original_name, season_number, episode_number } = params;
@@ -188,13 +186,14 @@ export default function Script({ navigation: { setOptions }, route: { params } }
         const trimmed = payload.replace(/[.,!?*"]/g, "")
         const dict = await getDict(trimmed);
         const $ = cheerio.load(dict.data);
+                    
+        /* Get Vocabulary */
         const $vocaList = $(".cleanword_type.kuek_type");   
-            
         let vocaArray = [];
         let wordArray = [];
         let meanArray = [];
         let pronounceArray = [];
-        
+
         $vocaList.each((ids, node) => {
             wordArray = $(node).find(".txt_emph1").text().trim().split(/[\s\n]+|""/);
             meanArray = $(node).find(".list_search").text().trim().split(/[\s\n]+|""/);
@@ -207,18 +206,37 @@ export default function Script({ navigation: { setOptions }, route: { params } }
             }); 
         });
 
+        /* Get Idioms */
+        const $idiomList = $("[data-tiara-layer='word word']").find("[name='searchWords']");
+        let idiomArray = [];
+
+        $idiomList.each((ids, node) => {
+            idiomArray = $(node).text().trim().split(/[\n\t\r\v]+|""/)
+                .filter(value => !["미국 ", "영국 ", "듣기"].includes(value));
+        });
+
+        const $idiomTest = $("[data-tiara-layer='word word']").querySelectorAll("[name='searchItem']");
+        let idiomTestArray = []
+
+        $idiomTest.each((ids, node) => {
+            idiomTestArray = $(node).text().trim().split(/[\n\t\r\v]+|""/)
+        });
+
+        console.log("idiomTestArray: ", idiomTestArray);
+
+        /* Get Examples */
         const $exampleList = $(".list_example.sound_example");
         let exampleArray = [];
         
         $exampleList.each((ids, node) => {
-           exampleArray = $(node).text().trim().split(/[\n]+|""/);
+            exampleArray = $(node).text().trim().split(/[\n\t\r\v]+|""/)
+                .filter(value => !["소리듣기", " ", "    "].includes(value))
+                .filter(value => !value.startsWith('(') || !value.endsWith(')'));
         });
 
-        console.log("trimmed:", trimmed);
-        console.log("vocaArray:", vocaArray);
-        console.log("exampleArray:", exampleArray);
-
         setVocaState(vocaArray);
+        setIdiomState(idiomArray);
+        setExampleState(exampleArray);
         setIsModal(true);
     };
     
@@ -252,7 +270,7 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                         </CloseButton>
                         <ModalScrollView>
                             <SectionView>
-                                <SectionTitle>단어·숙어</SectionTitle>
+                                <SectionTitle>단어</SectionTitle>
                                 <SearchWordView>
                                     <SearchWordTitle>{vocaState[0]?.word[0]}</SearchWordTitle>
                                     <FlexWrapView>
@@ -260,6 +278,18 @@ export default function Script({ navigation: { setOptions }, route: { params } }
                                     </FlexWrapView>
                                     <SearchWordSubText>미국: {vocaState[0]?.pronounce[1]}</SearchWordSubText>
                                     <SearchWordSubText>영국: {vocaState[0]?.pronounce[4]}</SearchWordSubText>
+                                </SearchWordView>
+                            </SectionView>
+                            <SectionView>
+                                <SectionTitle>숙어</SectionTitle>
+                                <SearchWordView>
+                                    {idiomState.map((item, index) => <SearchWordMainText key={index}>{item}</SearchWordMainText>)}
+                                </SearchWordView>
+                            </SectionView>
+                            <SectionView>
+                                <SectionTitle>예문</SectionTitle>
+                                <SearchWordView>
+                                    {exampleState.map((item, index) => <SearchWordMainText key={index}>{item}</SearchWordMainText>)}
                                 </SearchWordView>
                             </SectionView>
                         </ModalScrollView>
